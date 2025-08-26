@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎛️ Signal Processing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #334155;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffffff, #f0f9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Controls */
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .preset-btn {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1d4ed8;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .preset-btn:hover {
+            background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+        }
+        
+        .plot-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .export-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0 auto 2rem;
+        }
+        
+        .export-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+        
+        .tutorial {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .tutorial h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #374151;
+            text-align: center;
+        }
+        
+        .tutorial h4 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+        }
+        
+        .tutorial ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tutorial li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .tutorial code {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            color: #1d4ed8;
+        }
+        
+        .info-panel {
+            background: rgba(239, 246, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(191, 219, 254, 0.5);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .info-panel h4 {
+            color: #1d4ed8;
+            margin-bottom: 1rem;
+        }
+        
+        .info-panel ul {
+            margin-left: 1rem;
+        }
+        
+        .info-panel li {
+            color: #1e40af;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .center-text {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            color: #374151;
+        }
+        
+        #plotDiv {
+            width: 100%;
+            height: 500px;
+            border-radius: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .title {
+                font-size: 2rem;
+            }
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎛️ Signal Processing</h1>
+            <p class="subtitle">Advanced toolkit for signal analysis and visualization</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('generator')">🎨 Signal Generator</button>
+            <button class="tab" onclick="switchTab('transform')">⚙️ Transform Tool</button>
+            <button class="tab" onclick="switchTab('convolution')">🔄 Convolution</button>
+            <button class="tab" onclick="switchTab('tutorial')">📚 Tutorial</button>
+        </div>
+
+        <!-- Tutorial Content -->
+        <div id="tutorial-content" class="tutorial hidden">
+            <h3>📚 Signal Processing Tutorial</h3>
+            <div>
+                <h4>🔧 Available Functions:</h4>
+                <ul>
+                    <li><code>u(t)</code> - Unit step function</li>
+                    <li><code>r(t)</code> - Ramp function</li>
+                    <li><code>sign(t)</code> - Signum function</li>
+                    <li><code>sinc(t)</code> - Sinc function</li>
+                    <li><code>δ(t)</code> - Unit impulse</li>
+                    <li><code>sin(t), cos(t), exp(t)</code> - Standard functions</li>
+                </ul>
+                
+                <h4>🔍 Example Equations:</h4>
+                <ul>
+                    <li><code>u(t) - u(t-2)</code> - Rectangular pulse</li>
+                    <li><code>u(t)*u(t-2)</code> - Product of steps</li>
+                    <li><code>3*[u(t-1)-u(t-3)]</code> - Scaled pulse</li>
+                    <li><code>exp(-t) * sin(2*π*t) * u(t)</code> - Damped sine</li>
+                </ul>
+                
+                <h4>🔄 Transformations:</h4>
+                <ul>
+                    <li><code>2*x(0.5*t-1)</code> - Scale and shift</li>
+                    <li><code>x(-t)</code> - Time reversal</li>
+                    <li><code>x(t-2)</code> - Time delay</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Signal Generator -->
+        <div id="generator-content" class="controls">
+            <div class="input-group">
+                <label class="label">📝 Signal Equation x(t) =</label>
+                <input type="text" id="equation" class="input" value="u(t) - u(t-2)" 
+                       placeholder="Example: u(t) - u(t-2)" 
+                       oninput="updatePlot()">
+                       
+                <div class="preset-buttons">
+                    <button class="preset-btn" onclick="setEquation('u(t)')">Step</button>
+                    <button class="preset-btn" onclick="setEquation('u(t) - u(t-2)')">Pulse</button>
+                    <button class="preset-btn" onclick="setEquation('r(t)')">Ramp</button>
+                    <button class="preset-btn" onclick="setEquation('exp(-t) * u(t)')">Decay</button>
+                    <button class="preset-btn" onclick="setEquation('sin(2*π*t)')">Sine</button>
+                    <button class="preset-btn" onclick="setEquation('cos(2*π*t)')">Cosine</button>
+                    <button class="preset-btn" onclick="setEquation('exp(-0.5*t) * sin(2*π*t) * u(t)')">Damped Sine</button>
+                    <button class="preset-btn" onclick="setEquation('sign(t)')">Signum</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transform Tool -->
+        <div id="transform-content" class="controls hidden">
+            <div class="input-group">
+                <label class="label">📝 Original Signal x(t) =</label>
+                <input type="text" id="originalSignal" class="input" value="u(t) - u(t-2)" 
+                       oninput="updateTransformPlot()">
+            </div>
+            <div class="input-group">
+                <label class="label">🔄 Transformed Signal y(t) =</label>
+                <input type="text" id="transformedSignal" class="input" value="" 
+                       placeholder="Example: 2*x(0.5*t-1)" 
+                       oninput="updateTransformPlot()">
+            </div>
+        </div>
+
+        <!-- Convolution -->
+        <div id="convolution-content" class="controls hidden">
+            <div class="input-group">
+                <label class="label">📝 Signal 1: x₁(t) =</label>
+                <input type="text" id="signal1" class="input" value="u(t) - u(t-2)" 
+                       oninput="updateConvolutionPlot()">
+            </div>
+            <div class="input-group">
+                <label class="label">📝 Signal 2: x₂(t) =</label>
+                <input type="text" id="signal2" class="input" value="exp(-t) * u(t)" 
+                       oninput="updateConvolutionPlot()">
+            </div>
+            <div class="center-text">
+                <span>Result: y(t) = x₁(t) ∗ x₂(t)</span>
+            </div>
+        </div>
+
+        <!-- Export Button -->
+        <div id="export-section">
+            <button class="export-btn" onclick="exportData()">
+                📥 Export Signal Data
+            </button>
+        </div>
+
+        <!-- Plot Area -->
+        <div id="plot-section" class="plot-container">
+            <div id="plotDiv"></div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <h4>💡 Quick Tips:</h4>
+            <ul>
+                <li>• Use u(t) for unit step, r(t) for ramp, δ(t) for impulse</li>
+                <li>• Combine functions: u(t)*u(t-2), 2*[u(t+2)+u(-t+2)]</li>
+                <li>• For transformations: 2*x(0.5*t-1) scales and shifts</li>
+                <li>• Convolution shows x₁(t) ∗ x₂(t)</li>
+                <li>• Use [ ] for grouping complex expressions</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentTab = 'generator';
+        let plotData = [];
+        const timeRange = { start: -10, end: 10, step: 0.05 };
+
+        // Signal processing functions
+        function unitStep(t) {
+            return t >= 0 ? 1 : 0;
+        }
+
+        function ramp(t) {
+            return t >= 0 ? t : 0;
+        }
+
+        function signum(t) {
+            return t > 0 ? 1 : (t < 0 ? -1 : 0);
+        }
+
+        function sinc(t) {
+            return Math.abs(t) < 1e-10 ? 1 : Math.sin(t) / t;
+        }
+
+        function impulse(t) {
+            return Math.abs(t) < 0.025 ? 40 : 0;
+        }
+
+        // Evaluate signal expression
+        function evaluateSignal(expr, t, originalSignal = null) {
+            try {
+                if (expr.includes('x(') && originalSignal) {
+                    return evaluateTransformation(expr, t, originalSignal);
+                }
+                
+                let processedExpr = expr.replace(/\[([^\[\]]+)\]/g, '($1)')
+                    .replace(/π/g, 'pi');
+
+                // Replace signal functions
+                processedExpr = processedExpr
+                    .replace(/u\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                        try {
+                            const argValue = math.evaluate(arg, { t, π: Math.PI, pi: Math.PI });
+                            return `(${unitStep(argValue)})`;
+                        } catch {
+                            return '0';
+                        }
+                    })
+                    .replace(/r\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                        try {
+                            const argValue = math.evaluate(arg, { t, π: Math.PI, pi: Math.PI });
+                            return `(${ramp(argValue)})`;
+                        } catch {
+                            return '0';
+                        }
+                    })
+                    .replace(/sign\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                        try {
+                            const argValue = math.evaluate(arg, { t, π: Math.PI, pi: Math.PI });
+                            return `(${signum(argValue)})`;
+                        } catch {
+                            return '0';
+                        }
+                    })
+                    .replace(/sinc\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                        try {
+                            const argValue = math.evaluate(arg, { t, π: Math.PI, pi: Math.PI });
+                            return `(${sinc(argValue)})`;
+                        } catch {
+                            return '0';
+                        }
+                    })
+                    .replace(/δ\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                        try {
+                            const argValue = math.evaluate(arg, { t, π: Math.PI, pi: Math.PI });
+                            return `(${impulse(argValue)})`;
+                        } catch {
+                            return '0';
+                        }
+                    });
+
+                return math.evaluate(processedExpr, { 
+                    t, 
+                    π: Math.PI, 
+                    pi: Math.PI,
+                    sin: Math.sin,
+                    cos: Math.cos,
+                    exp: Math.exp,
+                    log: Math.log,
+                    abs: Math.abs,
+                    sqrt: Math.sqrt
+                });
+            } catch (error) {
+                return 0;
+            }
+        }
+
+        // Handle transformations
+        function evaluateTransformation(transformExpr, t, originalSignal) {
+            try {
+                const xPattern = /(\d*\.?\d*)\s*\*?\s*x\(([^)]+)\)/g;
+                let result = transformExpr;
+                let match;
+                
+                while ((match = xPattern.exec(transformExpr)) !== null) {
+                    const amplitude = match[1] ? parseFloat(match[1]) : 1;
+                    const timeExpr = match[2];
+                    
+                    const transformedTime = math.evaluate(timeExpr, { t, π: Math.PI, pi: Math.PI });
+                    const originalValue = evaluateSignal(originalSignal, transformedTime);
+                    const transformedValue = amplitude * originalValue;
+                    
+                    result = result.replace(match[0], transformedValue.toString());
+                }
+                
+                return parseFloat(result) || 0;
+            } catch (error) {
+                return 0;
+            }
+        }
+
+        // Generate plot data
+        function generatePlotData(expr, originalSignal = null) {
+            const data = { x: [], y: [] };
+            const { start, end, step } = timeRange;
+            
+            for (let t = start; t <= end; t += step) {
+                const value = evaluateSignal(expr, t, originalSignal);
+                data.x.push(parseFloat(t.toFixed(3)));
+                data.y.push(value);
+            }
+            return data;
+        }
+
+        // Fast convolution calculation
+        function calculateConvolution(signal1, signal2) {
+            const data = { x: [], y: [] };
+            const convRange = { start: -5, end: 5, step: 0.1 };
+            
+            for (let t = convRange.start * 2; t <= convRange.end * 2; t += convRange.step) {
+                let convValue = 0;
+                for (let tau = convRange.start; tau <= convRange.end; tau += convRange.step) {
+                    const x1 = evaluateSignal(signal1, tau);
+                    const x2 = evaluateSignal(signal2, t - tau);
+                    convValue += x1 * x2 * convRange.step;
+                }
+                data.x.push(parseFloat(t.toFixed(2)));
+                data.y.push(convValue);
+            }
+            return data;
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('[id$="-content"]').forEach(content => content.classList.add('hidden'));
+            document.getElementById('export-section').classList.toggle('hidden', tabName === 'tutorial');
+            document.getElementById('plot-section').classList.toggle('hidden', tabName === 'tutorial');
+            
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+            
+            if (tabName !== 'tutorial') {
+                setTimeout(() => {
+                    if (tabName === 'generator') updatePlot();
+                    else if (tabName === 'transform') updateTransformPlot();
+                    else if (tabName === 'convolution') updateConvolutionPlot();
+                }, 100);
+            }
+        }
+
+        // Set equation preset
+        function setEquation(expr) {
+            document.getElementById('equation').value = expr;
+            updatePlot();
+        }
+
+        // Update plots
+        function updatePlot() {
+            const equation = document.getElementById('equation').value;
+            if (!equation) return;
+            
+            const data = generatePlotData(equation);
+            plotData = [{
+                x: data.x,
+                y: data.y,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'x(t)',
+                line: { color: '#3b82f6', width: 3 }
+            }];
+            
+            Plotly.newPlot('plotDiv', plotData, {
+                title: { text: 'Signal Plot', font: { size: 18 } },
+                xaxis: { title: 'Time (t)', gridcolor: '#f0f0f0' },
+                yaxis: { title: 'Amplitude', gridcolor: '#f0f0f0' },
+                plot_bgcolor: '#fafafa',
+                showlegend: true
+            });
+        }
+
+        function updateTransformPlot() {
+            const original = document.getElementById('originalSignal').value;
+            const transformed = document.getElementById('transformedSignal').value;
+            
+            if (!original) return;
+            
+            const originalData = generatePlotData(original);
+            const traces = [{
+                x: originalData.x,
+                y: originalData.y,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Original x(t)',
+                line: { color: '#3b82f6', width: 3 }
+            }];
+            
+            if (transformed) {
+                const transformedData = generatePlotData(transformed, original);
+                traces.push({
+                    x: transformedData.x,
+                    y: transformedData.y,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Transformed y(t)',
+                    line: { color: '#dc2626', width: 3 }
+                });
+            }
+            
+            plotData = traces;
+            Plotly.newPlot('plotDiv', traces, {
+                title: { text: 'Signal Transformation', font: { size: 18 } },
+                xaxis: { title: 'Time (t)', gridcolor: '#f0f0f0' },
+                yaxis: { title: 'Amplitude', gridcolor: '#f0f0f0' },
+                plot_bgcolor: '#fafafa',
+                showlegend: true
+            });
+        }
+
+        function updateConvolutionPlot() {
+            const signal1 = document.getElementById('signal1').value;
+            const signal2 = document.getElementById('signal2').value;
+            
+            if (!signal1 || !signal2) return;
+            
+            const convData = calculateConvolution(signal1, signal2);
+            plotData = [{
+                x: convData.x,
+                y: convData.y,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'x₁(t) ∗ x₂(t)',
+                line: { color: '#059669', width: 3 }
+            }];
+            
+            Plotly.newPlot('plotDiv', plotData, {
+                title: { text: 'Convolution Result', font: { size: 18 } },
+                xaxis: { title: 'Time (t)', gridcolor: '#f0f0f0' },
+                yaxis: { title: 'Amplitude', gridcolor: '#f0f0f0' },
+                plot_bgcolor: '#fafafa',
+                showlegend: true
+            });
+        }
+
+        // Export data
+        function exportData() {
+            if (plotData.length === 0) return;
+            
+            const dataToExport = plotData.map(trace => ({
+                name: trace.name,
+                x: trace.x,
+                y: trace.y
+            }));
+            
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `signal_data_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePlot();
+        });
+    </script>
+</body>
+</html>
